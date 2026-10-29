@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: nadir-postgres
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${DB_NAME:?Define DB_NAME in .env}
+      POSTGRES_USER: ${DB_USER:?Define DB_USER in .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD in .env}
+    volumes:
+      - nadir_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-nadir_user} -d ${DB_NAME:-nadir_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nadir-app
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    environment:
+      SERVER_PORT: 8080
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:?Define DB_NAME in .env}
+      DB_USER: ${DB_USER:?Define DB_USER in .env}
+      DB_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD in .env}
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET in .env}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  nadir_pgdata:

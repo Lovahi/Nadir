@@ -4,6 +4,10 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
 
 ### STS ###
 .apt_generated
